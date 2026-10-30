@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Web - Real-Time Chat App</title>
+
+  <!-- Tailwind CSS used by the original design -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            wa: {
+              teal: '#00a884',
+              tealDark: '#008069',
+              bgPanel: '#f0f2f5',
+              bgChat: '#efeae2',
+              border: '#e9edef',
+              sentBubble: '#d9fdd3',
+              textPrimary: '#111b21',
+              textSecondary: '#667781',
+              badge: '#25d366'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-[#d1d7db] h-screen overflow-hidden font-sans">
+
+  <div class="absolute top-0 left-0 right-0 h-32 bg-[#00a884]"></div>
+
+  <div class="relative z-10 flex w-full h-full lg:h-[calc(100vh-38px)] lg:w-[calc(100vw-38px)] max-w-[1680px] mx-auto my-auto bg-white shadow-2xl overflow-hidden">
+
+    <!-- LEFT SIDEBAR -->
+    <aside id="chat-sidebar" class="w-full md:w-[380px] lg:w-[420px] bg-white border-r border-wa-border flex flex-col shrink-0">
+
+      <div class="h-16 px-4 bg-wa-bgPanel flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold">
+            IC
+          </div>
+          <div>
+            <h2 class="text-sm font-semibold">Intern Candidate</h2>
+            <p class="text-xs text-wa-textSecondary">Frontend Live Project</p>
+          </div>
+        </div>
+
+        <button id="clear-history-btn" class="p-2 rounded-full hover:bg-red-50" title="Clear history">
+          🗑️
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="p-3 border-b border-wa-border">
+        <input
+          id="sidebar-search-input"
+          type="text"
+          placeholder="Search chats"
+          class="w-full rounded-lg bg-wa-bgPanel px-3 py-2 text-sm outline-none"
+        >
+
+        <div class="flex gap-2 mt-3 text-xs">
+          <button class="filter-btn active">All</button>
+          <button class="filter-btn">Unread</button>
+          <button class="filter-btn">Groups</button>
+        </div>
+      </div>
+
+      <!-- Contact List -->
+      <div id="chat-list-scrollable" class="flex-1 overflow-y-auto">
+
+        <div id="active-chat-item" class="chat-contact selected">
+          <div class="avatar bg-[#008069]">💬</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between gap-2">
+              <strong class="text-sm">Tech Lead &amp; Chatbot</strong>
+              <span id="sidebar-last-time" class="text-xs text-[#00a884]">10:01 AM</span>
+            </div>
+            <p id="sidebar-last-msg" class="text-xs text-wa-textSecondary truncate">
+              Best of luck with your internship 🚀
+            </p>
+          </div>
+        </div>
+
+        <div class="chat-contact">
+          <div class="avatar bg-slate-600">HR</div>
+          <div>
+            <strong class="text-sm">HR Talent Team</strong>
+            <p class="text-xs text-wa-textSecondary">Your interview evaluation is complete!</p>
+          </div>
+        </div>
+
+        <div class="chat-contact">
+          <div class="avatar bg-teal-700">Dev</div>
+          <div>
+            <strong class="text-sm">Intern Cohort 2026</strong>
+            <p class="text-xs text-wa-textSecondary">Don't forget to push your code.</p>
+          </div>
+        </div>
+
+        <div class="chat-contact">
+          <div class="avatar bg-gray-500">PR</div>
+          <div>
+            <strong class="text-sm">Product Review Board</strong>
+            <p class="text-xs text-wa-textSecondary">GitHub pull request approved.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Test Buttons -->
+      <div class="p-3 bg-wa-bgPanel">
+        <p class="text-xs font-semibold mb-2">QUICK KEYWORD TESTS</p>
+        <div class="flex flex-wrap gap-2">
+          <button class="quick-btn" onclick="quickFillPrompt('hello')">hello</button>
+          <button class="quick-btn" onclick="quickFillPrompt('hi')">hi</button>
+          <button class="quick-btn" onclick="quickFillPrompt('help')">help</button>
+          <button class="quick-btn" onclick="quickFillPrompt('internship')">internship</button>
+          <button class="quick-btn" onclick="quickFillPrompt('bye')">bye</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CHAT WINDOW -->
+    <main class="flex-1 flex flex-col min-w-0 bg-wa-bgChat">
+
+      <!-- Chat Header -->
+      <header class="h-16 px-4 bg-wa-bgPanel flex items-center justify-between border-b border-wa-border">
+        <div class="flex items-center gap-3">
+          <button id="mobile-sidebar-toggle" class="md:hidden">❮</button>
+          <div class="avatar bg-[#008069]">💬</div>
+          <div>
+            <h2 class="text-sm font-semibold">Tech Lead &amp; Chatbot</h2>
+            <p id="header-status-text" class="text-xs text-[#00a884]">online</p>
+          </div>
+        </div>
+
+        <div class="relative">
+          <button id="menu-dropdown-btn" class="p-2 rounded-full hover:bg-black/5">
+            ⋮
+          </button>
+
+          <div id="more-menu" class="hidden absolute right-0 top-10 bg-white shadow-xl rounded-lg w-52 p-2 z-50">
+            <button onclick="clearChatMessages()" class="menu-item">Clear chat</button>
+            <button onclick="loadSampleConversation()" class="menu-item">Load test conversation</button>
+            <p class="text-xs text-gray-500 p-2">Vanilla JS · localStorage</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Messages -->
+      <section id="chat-messages-container" class="flex-1 overflow-y-auto p-4 sm:p-8 whatsapp-wallpaper">
+
+        <div class="text-center mb-4">
+          <span class="inline-block bg-[#ffeecd] rounded-lg px-3 py-2 text-xs text-gray-600">
+            Messages are simulated and saved in your browser.
+          </span>
+        </div>
+
+        <div class="text-center mb-4">
+          <span class="bg-white rounded-md px-3 py-1 text-xs text-gray-500">TODAY</span>
+        </div>
+
+        <div id="message-list" class="space-y-2"></div>
+
+        <div id="typing-indicator" class="hidden mt-3 text-sm text-gray-600">
+          <span class="typing-dots">● ● ●</span> typing...
+        </div>
+      </section>
+
+      <!-- Message Input -->
+      <footer class="bg-wa-bgPanel p-3 flex items-center gap-2 relative">
+
+        <button id="emoji-btn" class="p-2" title="Emojis">😊</button>
+        <button id="attachment-btn" class="p-2" title="Attachment">📎</button>
+
+        <div id="emoji-palette" class="hidden absolute bottom-16 left-3 bg-white p-3 rounded-xl shadow-xl grid grid-cols-4 gap-2 z-50">
+          <button class="emoji-opt">👋</button>
+          <button class="emoji-opt">😊</button>
+          <button class="emoji-opt">🚀</button>
+          <button class="emoji-opt">💻</button>
+          <button class="emoji-opt">👍</button>
+          <button class="emoji-opt">🔥</button>
+          <button class="emoji-opt">🎉</button>
+          <button class="emoji-opt">❤️</button>
+        </div>
+
+        <form id="chat-form" class="flex flex-1 gap-2">
+          <input
+            id="message-input"
+            type="text"
+            autocomplete="off"
+            placeholder="Type a message..."
+            class="flex-1 min-w-0 rounded-lg bg-white px-4 py-3 text-sm outline-none"
+          >
+
+          <button id="send-button" type="submit" class="bg-[#00a884] hover:bg-[#008069] text-white px-5 rounded-full">
+            ➤
+          </button>
+        </form>
+      </footer>
+    </main>
+  </div>
+
+  <!-- External JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
